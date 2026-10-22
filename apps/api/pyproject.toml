@@ -1,0 +1,55 @@
+[project]
+name = "content-agents"
+version = "0.1.0"
+description = "Multi-agent content writing pipeline (research, write, humanize, benchmark)"
+readme = "README.md"
+authors = [
+    { name = "Vishesh", email = "visheshvasu2305@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "ollama>=0.6.3",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.22,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Don't rely on the editable-install .pth: macOS can flag it hidden, and Python 3.13 skips hidden .pth files.
+pythonpath = ["src"]
+asyncio_mode = "auto"
+addopts = "--strict-markers"
+
+[tool.coverage.run]
+source = ["content_agents"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "ASYNC", "RUF"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]

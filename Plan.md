@@ -9,6 +9,15 @@
 - **Cost:** about 70–80% lower per article. Cheaper models handle routine steps, plain code replaces AI calls where possible, editors change only flagged sentences, and the system writes 1 draft instead of 3.
 - **Humanization:** a new humanization pipeline (§6) makes the output read as genuinely human-written and checks it against several AI-detection tools before delivery.
 
+> **v3 change (2026-10-22): local LLM via Ollama, no Claude API.** This note supersedes every Claude, Anthropic, model-price and API-key reference below.
+> - **Models:** all agents run on a local Ollama model through the official `ollama` Python library. The default is `qwen3-vl:8b-instruct` for both tiers (text and vision, ~6 GB, fits 16 GB RAM). Models are set per tier with `OLLAMA_BULK_MODEL` and `OLLAMA_WRITING_MODEL`.
+> - **Thinking** is off by default (`OLLAMA_THINK`). `qwen3-vl:8b` ignores `think=false` and returns its whole answer as thinking, so the instruct variant is the default.
+> - **Structured output** uses Ollama's `format` (a JSON schema) plus Pydantic validation. **Every list a model fills must have a `max_length`**, or small models can keep generating until they hit the token limit.
+> - **Cost:** LLM calls cost $0. The per-job cap is a **token budget** (`JOB_TOKEN_BUDGET`). The only paid items left are the search API (Serper) and the optional commercial AI detectors, about $0.15–0.45 per article.
+> - **Gone with Claude:** server-side refusal fallbacks, the Batch API and Claude citations. The Writer emits `[n]` fact references instead, and plain code validates them (Step 6).
+> - **Embeddings:** Ollama's `qwen3-embedding:0.6b` (already pulled) replaces fastembed for Step 4.
+> - **Trade-off:** an 8B local model writes less well than Sonnet, so the humanization loop (§6) and the benchmark loop carry more of the quality burden. Larger models can be switched in through env vars on bigger hardware.
+
 ---
 
 ## 1. Summary
