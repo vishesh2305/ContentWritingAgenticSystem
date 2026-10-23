@@ -33,22 +33,27 @@ class ContentBrief(BaseModel):
     search_intent: Literal["informational", "commercial", "transactional", "navigational"]
     audience: str
     tone: str
-    target_word_count: int = Field(gt=0)
+    target_word_count: int = Field(gt=0, le=10_000)
     primary_keyword: str
-    secondary_keywords: list[str] = Field(default_factory=list)
-    questions_to_answer: list[str] = Field(default_factory=list)
+    secondary_keywords: list[str] = Field(default_factory=list, max_length=10)
+    questions_to_answer: list[str] = Field(default_factory=list, max_length=10)
     locale: str = "en-US"
     format: Literal["blog", "listicle", "how-to", "comparison", "guide"]
 
 
-class VoiceProfile(BaseModel):
+class VoiceStyle(BaseModel):
+    """The part of the voice the LLM infers from the request and writing samples."""
+
     persona: str
     pov: Literal["first_person", "second_person", "third_person"]
     formality: Literal["casual", "conversational", "professional"]
-    sample_excerpts: list[str] = Field(default_factory=list)
-    signature_phrases: list[str] = Field(default_factory=list)
-    avoid_phrases: list[str] = Field(default_factory=list)
-    experience_notes: list[str] = Field(default_factory=list)
+    signature_phrases: list[str] = Field(default_factory=list, max_length=8)
+    avoid_phrases: list[str] = Field(default_factory=list, max_length=15)
+
+
+class VoiceProfile(VoiceStyle):
+    sample_excerpts: list[str] = Field(default_factory=list, max_length=3)
+    experience_notes: list[str] = Field(default_factory=list, max_length=10)
 
 
 class Source(BaseModel):
@@ -58,6 +63,9 @@ class Source(BaseModel):
     domain: str
     credibility: Probability
     is_competitor: bool
+    # Position in the primary-keyword results; set only for competitors.
+    serp_rank: int | None = None
+    word_count: int = 0
     markdown: str
 
 
@@ -165,10 +173,16 @@ class PipelineState(BaseModel):
     job_id: str
     raw_prompt: str
     attachments: list[Attachment] = Field(default_factory=list)
+    # User-supplied voice inputs: the strongest human signals (Plan.md §6, Layer A).
+    writing_samples: list[str] = Field(default_factory=list, max_length=5)
+    experience_notes: list[str] = Field(default_factory=list, max_length=10)
     ingested_context: str | None = None
+    seed_urls: list[str] = Field(default_factory=list)
+    clarifying_questions: list[str] = Field(default_factory=list)
     brief: ContentBrief | None = None
     voice: VoiceProfile | None = None
     sources: list[Source] = Field(default_factory=list)
+    people_also_ask: list[str] = Field(default_factory=list)
     fact_sheet: list[Fact] = Field(default_factory=list)
     serp_blueprint: SerpBlueprint | None = None
     outline: Outline | None = None

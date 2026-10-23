@@ -4,7 +4,7 @@ from typing import Any
 import httpx
 import ollama
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from content_agents.config import OllamaSettings
 from content_agents.llm.budget import BudgetExceededError, TokenBudget, Usage
@@ -19,6 +19,10 @@ BRIEF_JSON = '{"topic": "pgvector", "keywords": ["vector search"]}'
 
 class Brief(BaseModel):
     topic: str
+    keywords: list[str] = Field(max_length=8)
+
+
+class UnboundedBrief(BaseModel):
     keywords: list[str]
 
 
@@ -90,6 +94,16 @@ async def test_parse_returns_validated_output_and_charges_tokens() -> None:
     assert result.model == BULK
     assert result.usage == Usage(prompt_tokens=1200, output_tokens=300)
     assert budget.used_tokens == 1500
+
+
+async def test_schema_with_unbounded_list_is_rejected_before_any_request() -> None:
+    api = FakeOllama()
+    llm, _ = make_llm(api)
+
+    with pytest.raises(ValueError, match="max_length"):
+        await llm.parse("fact_sheet", system="sys", messages=MESSAGES, output_format=UnboundedBrief)
+
+    assert api.bodies == []
 
 
 async def test_bulk_request_shape() -> None:

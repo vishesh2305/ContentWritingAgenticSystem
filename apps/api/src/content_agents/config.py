@@ -1,5 +1,7 @@
 """Runtime settings, read from the environment and `.env`."""
 
+from pathlib import Path
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -24,3 +26,13 @@ class OllamaSettings(BaseSettings):
 
     def model_for(self, tier: Tier) -> str:
         return self.bulk_model if tier == "bulk" else self.writing_model
+
+
+class ResearchSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # Optional: real Google rankings + "People also ask". Without it, DuckDuckGo (free).
+    serper_api_key: str | None = None
+    cache_path: Path = Path(".cache/content_agents.db")
+    max_sources: int = Field(default=15, gt=0)
+    user_agent: str = "ContentAgentsBot/0.1 (research crawler; respects robots.txt)"

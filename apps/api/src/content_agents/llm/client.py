@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from content_agents.config import OllamaSettings
 from content_agents.llm.budget import TokenBudget, Usage
+from content_agents.llm.schema import find_unbounded_arrays
 from content_agents.llm.tiers import resolve
 
 DEFAULT_MAX_TOKENS = 8_192
@@ -47,9 +48,13 @@ class LLMClient:
         output_format: type[ModelT],
         max_tokens: int = DEFAULT_MAX_TOKENS,
     ) -> LLMResult[ModelT]:
-        response = await self._chat(
-            agent, system, messages, max_tokens, json_schema=output_format.model_json_schema()
-        )
+        schema = output_format.model_json_schema()
+        if unbounded := find_unbounded_arrays(schema):
+            raise ValueError(
+                f"{output_format.__name__}: every model-filled list needs max_length "
+                f"(unbounded: {', '.join(unbounded)})"
+            )
+        response = await self._chat(agent, system, messages, max_tokens, json_schema=schema)
         output = output_format.model_validate_json(response.message.content or "")
         return LLMResult(output, response.model or "", Usage.from_response(response))
 

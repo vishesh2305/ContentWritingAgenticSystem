@@ -8,9 +8,15 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "ddgs>=9.16.0",
+    "httpx>=0.28.1",
     "ollama>=0.6.3",
     "pydantic>=2.14.1",
     "pydantic-settings>=2.16.1",
+    "pypdf>=6.21.2",
+    "python-docx>=1.2.0",
+    "trafilatura>=2.3.1",
+    "youtube-transcript-api>=1.2.4",
 ]
 
 [build-system]
@@ -19,6 +25,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "fpdf2>=2.8.9",
     "httpx>=0.28.1",
     "mypy>=2.4.0",
     "pytest>=9.1.1",
@@ -30,7 +37,7 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Don't rely on the editable-install .pth: macOS can flag it hidden, and Python 3.13 skips hidden .pth files.
-pythonpath = ["src"]
+pythonpath = ["src", "tests"]
 asyncio_mode = "auto"
 addopts = "--strict-markers"
 
@@ -53,3 +60,9 @@ select = ["E", "F", "I", "B", "UP", "SIM", "ASYNC", "RUF"]
 python_version = "3.13"
 strict = true
 plugins = ["pydantic.mypy"]
+mypy_path = ["src", "tests"]
+
+[[tool.mypy.overrides]]
+# Third-party libraries without type information.
+module = ["docx.*", "youtube_transcript_api.*", "faster_whisper.*", "fpdf.*"]
+ignore_missing_imports = true
